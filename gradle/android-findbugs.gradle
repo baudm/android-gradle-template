@@ -1,0 +1,33 @@
+apply plugin: 'findbugs'
+
+// Disable default FindBugs tasks
+findbugs {
+    sourceSets = null
+}
+
+task findbugsRelease(type: FindBugs) {
+    // Execute this task only when explicitly requested
+    enabled = name in gradle.startParameter.taskNames || check.name in gradle.startParameter.taskNames
+    def coreSourceSet = project(':core').sourceSets.main
+    classes = files('build/intermediates/classes/release') + coreSourceSet.output
+    source = android.sourceSets.main.java.srcDirs + coreSourceSet.allJava
+    classpath = configurations.compile.asFileTree + coreSourceSet.compileClasspath
+    effort = 'max'
+    ignoreFailures = true
+    excludeFilter = file('findbugs-exclude.xml')
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+
+check.dependsOn findbugsRelease
+
+// Make sure that FindBugs runs before ProGuard obfuscates the bytecode
+tasks.whenTaskAdded { task ->
+    if (task.name == 'compileReleaseJava') {
+        findbugsRelease.dependsOn task
+    } else if (task.name == 'proguardRelease') {
+        task.dependsOn findbugsRelease
+    }
+}
