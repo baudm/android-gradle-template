@@ -3,7 +3,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.android.tools.build:gradle:2.2.0-beta2'
+        //classpath 'com.google.gms:google-services:3.0.0'
     }
 }
 
@@ -11,63 +12,18 @@ allprojects {
     repositories {
         jcenter()
     }
-    // Common Android configuration
-    plugins.matching { it.class.name in ['com.android.build.gradle.AppPlugin', 'com.android.build.gradle.LibraryPlugin'] }.all {
-        android {
-            compileSdkVersion 19
-            buildToolsVersion "20.0.0"
+}
 
-            compileOptions {
-                sourceCompatibility = JavaVersion.VERSION_1_7
-                targetCompatibility = JavaVersion.VERSION_1_7
-            }
-
-            // Disable predexing in Jenkins
-            dexOptions {
-                preDexLibraries = System.getenv('JENKINS_HOME') == null
-            }
-        }
+subprojects {
+    // Common module configuration
+    ext {
+        // SDK and tool versions
+        minSdkVersion = 16
+        targetSdkVersion = 24
+        buildToolsVersion = '24.0.1'
     }
 }
 
-apply plugin: 'com.android.application'
-apply from: 'gradle/android-legacy-dirs.gradle'
-apply from: 'gradle/android-eclipse.gradle'
-apply from: 'gradle/android-findbugs.gradle'
-
-android {
-    defaultConfig {
-        applicationId "com.yourcompany.yourproduct"
-        minSdkVersion 14
-        targetSdkVersion 19
-    }
-
-    // FIXME: Do this for now until all the lint issues are fixed
-    lintOptions {
-        abortOnError false
-    }
-
-    // Workaround for duplicate files contained in JARs
-    packagingOptions {
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-    }
-
-    buildTypes {
-        release {
-            runProguard true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
-        }
-    }
-}
-
-dependencies {
-    //compile 'com.android.support:support-v13:20.+'
-}
-
-// Enable all compiler warnings
-afterEvaluate {
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << '-Xlint:all'
-    }
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
